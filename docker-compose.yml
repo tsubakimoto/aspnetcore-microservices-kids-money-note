@@ -1,0 +1,170 @@
+services:
+  # SQL Server データベース
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: kids-money-note-sqlserver
+    environment:
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - kids-money-note-network
+
+  # RabbitMQ メッセージブローカー
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: kids-money-note-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - kids-money-note-network
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: src/Services/UserService/UserService.API/Dockerfile
+    container_name: kids-money-note-user-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=UserDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - EventBus__Connection=amqp://admin:admin@rabbitmq:5672
+    ports:
+      - "8001:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - kids-money-note-network
+
+  # Account Service
+  account-service:
+    build:
+      context: .
+      dockerfile: src/Services/AccountService/AccountService.API/Dockerfile
+    container_name: kids-money-note-account-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AccountDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - EventBus__Connection=amqp://admin:admin@rabbitmq:5672
+    ports:
+      - "8002:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - kids-money-note-network
+
+  # Transaction Service
+  transaction-service:
+    build:
+      context: .
+      dockerfile: src/Services/TransactionService/TransactionService.API/Dockerfile
+    container_name: kids-money-note-transaction-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TransactionDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - EventBus__Connection=amqp://admin:admin@rabbitmq:5672
+    ports:
+      - "8003:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - kids-money-note-network
+
+  # Goal Service
+  goal-service:
+    build:
+      context: .
+      dockerfile: src/Services/GoalService/GoalService.API/Dockerfile
+    container_name: kids-money-note-goal-service
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=GoalDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - EventBus__Connection=amqp://admin:admin@rabbitmq:5672
+    ports:
+      - "8004:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    networks:
+      - kids-money-note-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ApiGateway/ApiGateway/Dockerfile
+    container_name: kids-money-note-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Services__UserService=http://user-service:8080
+      - Services__AccountService=http://account-service:8080
+      - Services__TransactionService=http://transaction-service:8080
+      - Services__GoalService=http://goal-service:8080
+    ports:
+      - "8000:8080"
+    depends_on:
+      - user-service
+      - account-service
+      - transaction-service
+      - goal-service
+    networks:
+      - kids-money-note-network
+
+  # Kids Web App
+  kids-app:
+    build:
+      context: .
+      dockerfile: src/Web/KidsApp/Dockerfile
+    container_name: kids-money-note-kids-app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiGateway__BaseUrl=http://api-gateway:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api-gateway
+    networks:
+      - kids-money-note-network
+
+  # Parent Web App
+  parent-app:
+    build:
+      context: .
+      dockerfile: src/Web/ParentApp/Dockerfile
+    container_name: kids-money-note-parent-app
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiGateway__BaseUrl=http://api-gateway:8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      - api-gateway
+    networks:
+      - kids-money-note-network
+
+volumes:
+  sqlserver_data:
+  rabbitmq_data:
+
+networks:
+  kids-money-note-network:
+    driver: bridge
