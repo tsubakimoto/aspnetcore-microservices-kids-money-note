@@ -51,10 +51,9 @@ Kids Money Noteは、ASP.NET Coreマイクロサービスアーキテクチャ�
 
 ### 前提条件
 - .NET 9.0 SDK
-- Azure サブスクリプション
+- Docker Desktop
+- Azure CLI（本番デプロイ用）
 - Visual Studio 2022 (v17.8以降) または Visual Studio Code
-- Docker Desktop（開発環境用）
-- Azure CLI
 
 ### セットアップ手順
 
@@ -64,31 +63,84 @@ Kids Money Noteは、ASP.NET Coreマイクロサービスアーキテクチャ�
    cd aspnetcore-microservices-kids-money-note
    ```
 
-2. **環境変数設定**
+2. **ソリューションのビルド**
    ```bash
-   cp .env.example .env
-   # .envファイルを編集して必要な設定値を入力
+   dotnet restore
+   dotnet build
    ```
 
-3. **Docker Composeでローカル環境起動**
+3. **User Serviceの単体実行（開発・テスト用）**
    ```bash
-   docker-compose up -d
+   cd src/Services/UserService/UserService.API
+   dotnet run
+   ```
+   
+   起動後、http://localhost:5247 でSwagger UIにアクセスできます。
+
+4. **Docker Composeでマルチサービス環境起動**
+   ```bash
+   # 全サービスをビルドして起動
+   docker-compose up -d --build
+   
+   # ログの確認
+   docker-compose logs -f
+   
+   # 停止
+   docker-compose down
    ```
 
-4. **データベースマイグレーション実行**
-   ```bash
-   dotnet run --project src/Services/UserService/UserService.API -- --migrate
-   dotnet run --project src/Services/AccountService/AccountService.API -- --migrate
-   dotnet run --project src/Services/TransactionService/TransactionService.API -- --migrate
-   ```
+5. **サービスエンドポイント（Docker Compose環境）**
+   - API Gateway: http://localhost:8000
+   - User Service: http://localhost:8001
+   - Account Service: http://localhost:8002
+   - Transaction Service: http://localhost:8003
+   - Goal Service: http://localhost:8004
+   - Kids Web App: http://localhost:8080
+   - Parent Web App: http://localhost:8081
+   - RabbitMQ Management: http://localhost:15672 (admin/admin)
 
-5. **初期データの投入**
-   ```bash
-   dotnet run --project src/Services/UserService/UserService.API -- --seed
-   dotnet run --project src/Services/TransactionService/TransactionService.API -- --seed
-   ```
+### テスト実行
+
+```bash
+# 全てのテストを実行
+dotnet test
+
+# 特定のプロジェクトのテストを実行
+dotnet test tests/IntegrationTests/
+
+# カバレッジレポート付きテスト実行
+dotnet test --collect:"XPlat Code Coverage"
+```
 
 詳細な開発・デプロイ手順については、[開発・デプロイメント設計書](./design-docs/07-development-deployment.md) をご参照ください。
+
+## 📊 実装状況
+
+### 完了済み ✅
+- **プロジェクト構造**: 全マイクロサービスのプロジェクト構成完了
+- **User Service**: 完全実装（Domain、Infrastructure、API、テスト済み）
+- **共通ライブラリ**: API レスポンス形式、ページネーション等
+- **Docker構成**: Docker Compose環境構築完了
+- **CI/CDパイプライン**: GitHub Actions ワークフロー基盤
+- **インフラストラクチャ**: Azure Bicep テンプレート基盤
+
+### 実装中/予定 🚧
+- **Account Service**: ドメインモデルと基本API
+- **Transaction Service**: 取引管理とカテゴリマスタ
+- **Goal Service**: 目標設定と進捗管理
+- **Notification Service**: イベント駆動通知システム
+- **Report Service**: レポート生成とデータ分析
+- **API Gateway**: YARP を使用したリバースプロキシ
+- **Blazor Web Apps**: Kids App と Parent App の実装
+- **Event Bus**: Azure Service Bus を使用したメッセージング
+- **認証・認可**: Microsoft Entra ID 統合
+
+### アーキテクチャ特徴 🏗️
+- **クリーンアーキテクチャ**: Domain-Infrastructure-API の3層構成
+- **マイクロサービス**: 独立したデータベースとビジネス境界
+- **イベント駆動**: Azure Service Bus を使用した非同期メッセージング
+- **コンテナ化**: Docker コンテナでの統一された実行環境
+- **クラウドネイティブ**: Azure Container Apps でのサーバーレス実行
 
 ## 🔧 アーキテクチャ概要
 
