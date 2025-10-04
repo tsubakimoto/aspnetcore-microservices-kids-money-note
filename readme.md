@@ -1,61 +1,136 @@
-# GitHub Codespaces ♥️ .NET
+# Kids Money Note - こども用お小遣い管理アプリケーション
 
-Want to try out the latest performance improvements coming with .NET for web development? 
+Kids Money Noteは、ASP.NET Coreマイクロサービスアーキテクチャを使用したこども用のお小遣い管理アプリケーションです。小学生が自分のお小遣いを管理し、親が子どもの金銭管理状況を把握できるシステムを提供します。
 
-This repo builds a Weather API, OpenAPI integration to test with [Scalar](https://learn.microsoft.com/aspnet/core/fundamentals/openapi/using-openapi-documents?view=aspnetcore-9.0#use-scalar-for-interactive-api-documentation), and displays the data in a web application using Blazor with .NET. 
+## 🎯 主要機能
 
-We've given you both a frontend and backend to play around with and where you go from here is up to you!
+- **収支管理**: お小遣いの収入・支出を簡単に記録
+- **目標設定**: 貯金目標の設定と進捗管理
+- **親への通知**: 子どもの金銭管理状況を親にリアルタイム通知
+- **レポート機能**: 月次・年次の使用状況レポート
+- **シンプルUI**: 小学生でも使いやすい直感的なインターフェース
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+## 🏗️ システム構成
 
-### Run Options
+このアプリケーションは以下のマイクロサービスで構成されています：
 
-[![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=lightgrey&logo=github)](https://codespaces.new/github/dotnet-codespaces)
-[![Open in Dev Container](https://img.shields.io/static/v1?style=for-the-badge&label=Dev+Container&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/github/dotnet-codespaces)
+- **User Service**: ユーザー管理（子ども・親）
+- **Account Service**: 口座・残高管理
+- **Transaction Service**: 取引記録・管理
+- **Goal Service**: 貯金目標管理
+- **Notification Service**: 通知・アラート機能
+- **Report Service**: レポート生成・分析
 
-You can also run this repository locally by following these instructions: 
-1. Clone the repo to your local machine `git clone https://github.com/github/dotnet-codespaces`
-1. Open repo in VS Code
+## 📋 設計書
 
-## Getting started
+詳細な設計書は [`/design-docs`](./design-docs/) ディレクトリに格納されています：
 
-1. **📤 One-click setup**: [Open a new Codespace](https://codespaces.new/github/dotnet-codespaces), giving you a fully configured cloud developer environment.
-2. **▶️ Run all, one-click again**: Use VS Code's built-in *Run* command and open the forwarded ports *8080* and *8081* in your browser. 
+- [設計書一覧](./design-docs/README.md)
+- [システムアーキテクチャ設計書](./design-docs/01-system-architecture.md)
+- [マイクロサービス設計書](./design-docs/02-microservices-design.md)
+- [データベース設計書](./design-docs/03-database-design.md)
+- [Azure インフラストラクチャ設計書](./design-docs/04-azure-infrastructure.md)
+- [セキュリティ設計書](./design-docs/05-security-design.md)
+- [API仕様書](./design-docs/06-api-specifications.md)
+- [開発・デプロイメント設計書](./design-docs/07-development-deployment.md)
 
-![Debug menu in VS Code showing Run All](images/RunAll.png)
+## 🛠️ 技術スタック
 
-3. The Blazor web app and Scalar can be open by heading to **/scalar** in your browser. On Scalar, head to the backend API and click "Test Request" to call and test the API. 
+- **フレームワーク**: ASP.NET Core 9.0
+- **言語**: C# 13
+- **データベース**: Azure SQL Database (SQL Server 2025)
+- **認証**: Microsoft Entra ID
+- **コンテナ**: Azure Container Apps
+- **API Gateway**: YARP (Yet Another Reverse Proxy)
+- **メッセージング**: Azure Service Bus
+- **監視**: Azure Application Insights
+- **フロントエンド**: Blazor Server/WebAssembly
+- **Infrastructure as Code**: Azure Bicep
 
-![A website showing weather](images/BlazorApp.png)
+## 🚀 開発環境構築
 
-!["UI showing testing an API"](images/scalar.png)
+### 前提条件
+- .NET 9.0 SDK
+- Azure サブスクリプション
+- Visual Studio 2022 (v17.8以降) または Visual Studio Code
+- Docker Desktop（開発環境用）
+- Azure CLI
 
+### セットアップ手順
 
-4. **🔄 Iterate quickly:** Codespaces updates the server on each save, and VS Code's debugger lets you dig into the code execution.
+1. **リポジトリのクローン**
+   ```bash
+   git clone https://github.com/tsubakimoto/aspnetcore-microservices-kids-money-note.git
+   cd aspnetcore-microservices-kids-money-note
+   ```
 
-5. To stop running, return to VS Code, and click Stop twice in the debug toolbar. 
+2. **環境変数設定**
+   ```bash
+   cp .env.example .env
+   # .envファイルを編集して必要な設定値を入力
+   ```
 
-![VS Code stop debuggin on both backend and frontend](images/StopRun.png)
+3. **Docker Composeでローカル環境起動**
+   ```bash
+   docker-compose up -d
+   ```
 
+4. **データベースマイグレーション実行**
+   ```bash
+   dotnet run --project src/Services/UserService/UserService.API -- --migrate
+   dotnet run --project src/Services/AccountService/AccountService.API -- --migrate
+   dotnet run --project src/Services/TransactionService/TransactionService.API -- --migrate
+   ```
 
-## Contributing
+5. **初期データの投入**
+   ```bash
+   dotnet run --project src/Services/UserService/UserService.API -- --seed
+   dotnet run --project src/Services/TransactionService/TransactionService.API -- --seed
+   ```
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+詳細な開発・デプロイ手順については、[開発・デプロイメント設計書](./design-docs/07-development-deployment.md) をご参照ください。
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+## 🔧 アーキテクチャ概要
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend Layer                       │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐ │
+│  │   Kids Web UI   │  │  Parent Web UI  │  │  Mobile App     │ │
+│  │   (Blazor)      │  │   (Blazor)      │  │  (Future)       │ │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                      API Gateway Layer                     │
+├─────────────────────────────────────────────────────────────┤
+│                    Azure Application Gateway               │
+│                         (YARP)                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                   Microservices Layer                      │
+├─────────────────────────────────────────────────────────────┤
+│ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐ │
+│ │   Account   │ │ Transaction │ │    Goal     │ │   User   │ │
+│ │  Service    │ │   Service   │ │  Service    │ │ Service  │ │
+│ └─────────────┘ └─────────────┘ └─────────────┘ └──────────┘ │
+│ ┌─────────────┐ ┌─────────────┐                              │
+│ │Notification │ │   Report    │                              │
+│ │  Service    │ │  Service    │                              │
+│ └─────────────┘ └─────────────┘                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## Trademarks
+## 📝 ライセンス
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+このプロジェクトは、MIT ライセンスの下で公開されています。詳細については、[LICENSE](LICENSE) ファイルをご覧ください。
+
+## 🤝 コントリビューション
+
+コントリビューションを歓迎します！プルリクエストやイシューの報告を通じて、プロジェクトの改善にご協力ください。
+
+## 📞 サポート
+
+質問やサポートが必要な場合は、GitHubのIssuesを通じてお気軽にお問い合わせください。
